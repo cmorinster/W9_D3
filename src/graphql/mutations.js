@@ -36,29 +36,30 @@ const login = {
     type: GraphQLString,
     description: 'Login a user',
     args: {
-        username: { type: GraphQLString },
+        email: { type: GraphQLString },
         password: { type: GraphQLString }
     },
     async resolve(parent, args){
-        const { username, password } = args;
-        const user1 = await User.findOne({ email: args.email }).exec();
-        if (!user1){
-            throw new Error("Email does not exist");
+        const { email, password } = args;
+        const user = await User.findOne({ email: args.email }).exec();
+        
+
+        const hashedPassword = user?.password || "";
+
+
+        const passMatch = await bcrypt.compare(hashedPassword, user.password);
+        if (!passMatch || !user){
+            throw new Error("Invalid credentials");
+
         }
 
-
-        const passMatch = await bcrypt.compare(password, user1.password);
-        if (!passMatch){
-            throw new Error("Invalid password");
-
-        }
-
-        const token = createJWT(user1);
+        const token = createJWT(user);
         return token
     }
 }
 
 
 module.exports = {
-    register, login
+    register, 
+    login
 }
